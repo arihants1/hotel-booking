@@ -1,0 +1,83 @@
+# HRS Hotel Booking System - Docker Compose with Auto Init
+# Updated: 2025-06-27 11:31:36 UTC
+# Author: arihants1
+
+version: '3.8'
+
+services:
+  # PostgreSQL Database with automatic initialization
+  postgres:
+    image: postgres:15-alpine
+    container_name: hrs-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: hotel_booking
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Mount the init script - CRITICAL: This executes init.sql on startup
+      - ./database/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      # Optional: Add multiple init scripts
+      # - ./database/additional-data.sql:/docker-entrypoint-initdb.d/02-additional.sql:ro
+    networks:
+      - hrs-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d hotel_booking"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s  # Give more time for initialization
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: hrs-redis
+    restart: unless-stopped
+    command: redis-server --requirepass redis_password_2025 --appendonly yes
+    ports:
+      - "6381:6381"
+    volumes:
+      - redis_data:/data
+    networks:
+      - hrs-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # pgAdmin for database management
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: hrs-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@hrs.com
+      PGADMIN_DEFAULT_PASSWORD: admin_password_2025
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "8080:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - hrs-network
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
+    name: hrs_postgres_data
+  redis_data:
+    name: hrs_redis_data
+  pgadmin_data:
+    name: hrs_pgadmin_data
+
+networks:
+  hrs-network:
+    name: hrs-network
+    driver: bridge

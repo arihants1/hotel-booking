@@ -1,0 +1,12 @@
+rootProject.name = 'hotel-booking'
+
+include 'shared'
+include 'api-gateway'
+include 'hotel-service'
+include 'booking-service'
+include 'user-service'
+include 'shared'
+include 'api-gateway'
+include 'hotel-service'
+include 'booking-service'
+include 'user-service'

@@ -1,0 +1,80 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot'
+    id 'io.spring.dependency-management'
+    id 'groovy'
+}
+
+description = 'HRS Hotel Booking System - Hotel Service'
+
+dependencies {
+    implementation project(':shared')
+
+    // Spring Boot Starters
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    // Database
+    runtimeOnly 'org.postgresql:postgresql'
+
+    // Monitoring
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+
+    // Utilities
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    // Testing
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.spockframework:spock-core:2.3-groovy-4.0'
+    testImplementation 'org.spockframework:spock-spring:2.3-groovy-4.0'
+    testImplementation 'org.testcontainers:postgresql'
+    testImplementation 'com.h2database:h2'
+}
+
+bootJar {
+    archiveFileName = 'hrs-hotel-service.jar'
+
+    manifest {
+        attributes(
+                'Implementation-Title': 'HRS Hotel Booking System - Hotel Service',
+                'Implementation-Version': project.version,
+                'Implementation-Vendor': 'HRS',
+                'Built-By': 'arihants1',
+                'Build-Timestamp': '2025-06-26 19:58:18 UTC',
+                'Main-Class': 'com.hrs.hotelbooking.hotel.HotelServiceApplication'
+        )
+    }
+}
+
+task hotelServiceInfo {
+    description = "Display HRS Hotel Service information"
+    group = "hrs"
+
+    doLast {
+        println """
+        🏨 HRS Hotel Service
+        ━━━━━━━━━━━━━━━━━━━━━━━
+        🔍 Advanced Search: Enabled
+        💾 Redis Caching: Optimized
+        📊 Availability Check: Real-time
+        🗄️ Database: PostgreSQL
+        📈 Performance: High-throughput
+        ━━━━━━━━━━━━━━━━━━━━━━━
+        Port: 8081
+        Author: arihants1
+        """
+    }
+}
+
+test {
+    systemProperty 'spring.profiles.active', 'test'
+    testLogging {
+        events "passed", "skipped", "failed"
+        showStandardStreams = false
+    }
+}

@@ -1,0 +1,148 @@
+server:
+  port: 8091
+
+spring:
+  application:
+    name: hrs-api-gateway
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: false  # We define routes manually for better control
+          lower-case-service-id: true
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+        - AddResponseHeader=X-HRS-Gateway, HRS-Hotel-Booking-System
+        - AddResponseHeader=X-Response-Time, ${#T(java.time.LocalDateTime).now()}
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+            allowCredentials: false
+            maxAge: 3600
+      httpclient:
+        connect-timeout: 5000
+        response-timeout: 10s
+        pool:
+          max-connections: 500
+          max-idle-time: 30s
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/hotel_booking
+    username: postgres
+    password: postgres123
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 25
+      minimum-idle: 5
+      idle-timeout: 300000
+      connection-timeout: 20000
+      max-lifetime: 1200000
+      leak-detection-threshold: 60000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        jdbc:
+          batch_size: 25
+        order_inserts: true
+        order_updates: true
+        cache:
+          use_second_level_cache: false
+
+  cache:
+    type: redis
+    redis:
+      cache-null-values: false
+      time-to-live: 600000  # 10 minutes
+      key-prefix: "hrs:hotel:"
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: redis_password_2025
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 15
+          max-idle: 8
+          min-idle: 3
+          max-wait: 2000ms
+  main:
+    web-application-type: reactive
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,gateway,circuitbreakers
+  endpoint:
+    health:
+      show-details: always
+    gateway:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      service: hrs-api-gateway
+      version: 1.0.0
+      environment: ${SPRING_PROFILES_ACTIVE:development}
+  health:
+    circuitbreakers:
+      enabled: true
+    ratelimiters:
+      enabled: true
+
+# Rate limiting configuration
+spring.cloud.gateway.filter.request-rate-limiter:
+  deny-empty-key: false
+  empty-key-status-code: 429
+
+# Resilience4j Configuration
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        registerHealthIndicator: true
+        slidingWindowSize: 20
+        minimumNumberOfCalls: 10
+        slowCallDurationThreshold: 2s
+        slowCallRateThreshold: 50
+        failureRateThreshold: 50
+        waitDurationInOpenState: 30s
+        permittedNumberOfCallsInHalfOpenState: 5
+  timelimiter:
+    configs:
+      default:
+        timeoutDuration: 5s
+
+logging:
+  level:
+    org.springframework.cloud.gateway: INFO
+    com.hrs.hotelbooking.gateway: DEBUG
+    org.springframework.cloud.circuitbreaker: DEBUG
+    io.github.resilience4j: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{traceId:-},%X{spanId:-}] %logger{36} - %msg%n"
+
+# HRS-specific configuration
+hrs:
+  gateway:
+    rate-limit:
+      requests-per-second: 1000
+      burst-capacity: 2000
+    circuit-breaker:
+      failure-threshold: 50
+      timeout: 5s
+    monitoring:
+      request-logging: true
+      performance-tracking: true

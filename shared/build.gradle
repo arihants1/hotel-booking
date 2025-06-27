@@ -1,0 +1,36 @@
+plugins {
+    id 'java-library'
+}
+
+description = 'HRS Hotel Booking System - Shared Components'
+
+dependencies {
+    // Spring Boot Starters
+    api 'org.springframework.boot:spring-boot-starter-web'
+    api 'org.springframework.boot:spring-boot-starter-validation'
+
+    // JSON Processing
+    api 'com.fasterxml.jackson.core:jackson-databind'
+    api 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+
+    // API Documentation
+    api 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0'
+
+    // Utilities
+    api 'org.apache.commons:commons-lang3'
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    // Testing
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+// Exclude Spring Boot plugin for shared module
+jar {
+    enabled = true
+    archiveClassifier = ''
+}
+
+bootJar {
+    enabled = false
+}

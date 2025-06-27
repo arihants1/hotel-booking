@@ -1,0 +1,72 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.1.5' apply false
+    id 'io.spring.dependency-management' version '1.1.3' apply false
+}
+
+allprojects {
+    group = 'com.hrs'
+    version = '1.0.0'
+
+    repositories {
+        mavenCentral()
+    }
+}
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'org.springframework.boot'
+    apply plugin: 'io.spring.dependency-management'
+    apply plugin: 'groovy'
+
+    java {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    configurations {
+        compileOnly {
+            extendsFrom annotationProcessor
+        }
+    }
+
+    dependencies {
+        // Spring Boot Starters
+        implementation 'org.springframework.boot:spring-boot-starter-web'
+        implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+        implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+        implementation 'org.springframework.boot:spring-boot-starter-actuator'
+        implementation 'org.springframework.boot:spring-boot-starter-validation'
+        implementation 'org.springframework.boot:spring-boot-starter-cache'
+
+        // Database
+        runtimeOnly 'org.postgresql:postgresql'
+
+        // Monitoring
+        implementation 'io.micrometer:micrometer-registry-prometheus'
+
+        // JSON Processing
+        implementation 'com.fasterxml.jackson.core:jackson-databind'
+        implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+
+        // API Documentation
+        implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0'
+
+        // Utilities
+        implementation 'org.apache.commons:commons-lang3'
+        compileOnly 'org.projectlombok:lombok'
+        annotationProcessor 'org.projectlombok:lombok'
+
+        // Testing
+        testImplementation 'org.springframework.boot:spring-boot-starter-test'
+        testImplementation 'org.spockframework:spock-core:2.3-groovy-4.0'
+        testImplementation 'org.spockframework:spock-spring:2.3-groovy-4.0'
+        testImplementation 'org.testcontainers:postgresql'
+        testImplementation 'org.testcontainers:spock'
+        testImplementation 'com.h2database:h2'
+    }
+
+    test {
+        useJUnitPlatform()
+    }
+}
