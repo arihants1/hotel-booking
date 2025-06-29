@@ -1,8 +1,10 @@
 package com.hrs.hotelbooking.hotel.service.impl;
 
 import com.hrs.hotelbooking.hotel.entity.Hotel;
+import com.hrs.hotelbooking.hotel.entity.HotelSearchDocument;
 import com.hrs.hotelbooking.hotel.mapper.HotelMapper;
 import com.hrs.hotelbooking.hotel.repository.HotelRepository;
+import com.hrs.hotelbooking.hotel.repository.HotelSearchRepository;
 import com.hrs.hotelbooking.hotel.service.HotelService;
 import com.hrs.hotelbooking.shared.dto.HotelDTO;
 import com.hrs.hotelbooking.shared.exception.ResourceNotFoundException;
@@ -19,9 +21,11 @@ import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 /**
- * HRS Hotel Service Implementation - Essential Features Only
+ * HRS Hotel Service Implementation
  * Core business logic for hotel operations
  *
  * @author arihants1
@@ -34,23 +38,34 @@ public class HotelServiceImpl implements HotelService {
 
     private final HotelRepository hotelRepository;
     private final HotelMapper hotelMapper;
-
-    private static final String CURRENT_USER = "arihants1";
+    private final HotelSearchRepository hotelSearchRepository;
 
     @Override
     public List<HotelDTO> searchHotels(String city, LocalDate checkIn, LocalDate checkOut,
                                        Integer rooms, int page, int size) {
-        log.info("Searching hotels : city={}, checkIn={}, checkOut={}",
-                CURRENT_USER, city, checkIn, checkOut);
+        log.info("Searching hotels (Elasticsearch): city={}, checkIn={}, checkOut={}, rooms={}",
+                city, checkIn, checkOut, rooms);
 
-        validateSearchParameters(city, page, size);
-
-        Pageable pageable = PageRequest.of(page, size);
-        Page<Hotel> hotelsPage = hotelRepository.searchHotels(city, null, null, null, null, null, pageable);
-
-        List<HotelDTO> results = hotelMapper.toDtoList(hotelsPage.getContent());
-        log.info("Found {} hotels ", results.size());
-
+        // Use Elasticsearch for fast search by city and isActive
+        List<HotelSearchDocument> docs;
+        if (city != null && !city.isEmpty()) {
+            docs = hotelSearchRepository.findByCityAndIsActive(city, true);
+        } else {
+            Iterable<HotelSearchDocument> iterable = hotelSearchRepository.findAll();
+            docs = StreamSupport.stream(iterable.spliterator(), false).collect(Collectors.toList());
+        }
+        // Map HotelSearchDocument to HotelDTO (minimal fields)
+        List<HotelDTO> results = docs.stream().map(doc -> {
+            HotelDTO dto = new HotelDTO();
+            dto.setId(doc.getId());
+            dto.setName(doc.getName());
+            dto.setCity(doc.getCity());
+            dto.setCountry(doc.getCountry());
+            dto.setStarRating(doc.getStarRating());
+            dto.setBasePrice(doc.getBasePrice() != null ? doc.getBasePrice() : null);
+            return dto;
+        }).toList();
+        log.info("Found {} hotels (Elasticsearch)", results.size());
         return results;
     }
 
@@ -107,6 +122,17 @@ public class HotelServiceImpl implements HotelService {
         Hotel hotel = hotelMapper.toEntity(hotelDTO);
         Hotel savedHotel = hotelRepository.save(hotel);
 
+        // Index in Elasticsearch for fast search
+        HotelSearchDocument doc = new HotelSearchDocument();
+        doc.setId(savedHotel.getId());
+        doc.setName(savedHotel.getName());
+        doc.setCity(savedHotel.getCity());
+        doc.setCountry(savedHotel.getCountry());
+        doc.setStarRating(savedHotel.getStarRating());
+        doc.setBasePrice(savedHotel.getBasePrice() != null ? savedHotel.getBasePrice() : null);
+        doc.setIsActive(savedHotel.getIsActive());
+        hotelSearchRepository.save(doc);
+
         return hotelMapper.toDto(savedHotel);
     }
 
@@ -127,6 +153,17 @@ public class HotelServiceImpl implements HotelService {
         hotelMapper.updateEntityFromDto(existingHotel, hotelDTO);
         Hotel updatedHotel = hotelRepository.save(existingHotel);
 
+        // Update Elasticsearch index
+        HotelSearchDocument doc = new HotelSearchDocument();
+        doc.setId(updatedHotel.getId());
+        doc.setName(updatedHotel.getName());
+        doc.setCity(updatedHotel.getCity());
+        doc.setCountry(updatedHotel.getCountry());
+        doc.setStarRating(updatedHotel.getStarRating());
+        doc.setBasePrice(updatedHotel.getBasePrice() != null ? updatedHotel.getBasePrice() : null);
+        doc.setIsActive(updatedHotel.getIsActive());
+        hotelSearchRepository.save(doc);
+
         return hotelMapper.toDto(updatedHotel);
     }
 
@@ -145,12 +182,9 @@ public class HotelServiceImpl implements HotelService {
         // Soft delete
         hotel.setIsActive(false);
         hotelRepository.save(hotel);
-    }
 
-    // Validation methods
-    private void validateSearchParameters(String city, int page, int size) {
-        validatePagination(page, size);
-        // City can be null for general search
+        // Remove from Elasticsearch index
+        hotelSearchRepository.deleteById(id);
     }
 
     private void validatePagination(int page, int size) {

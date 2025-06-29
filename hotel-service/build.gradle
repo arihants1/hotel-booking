@@ -17,9 +17,11 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-cache'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
 
     // Database
     runtimeOnly 'org.postgresql:postgresql'
+    implementation 'org.elasticsearch.client:elasticsearch-rest-high-level-client:7.17.18'
 
     // Monitoring
     implementation 'io.micrometer:micrometer-registry-prometheus'
@@ -58,10 +60,10 @@ task hotelServiceInfo {
     doLast {
         println """
         🏨 HRS Hotel Service
-        ━━━━━━━━━━━━━━━━━━━━━━━
+        ━━━━━━━���━━━━━━━━━━━━━━━
         🔍 Advanced Search: Enabled
         💾 Redis Caching: Optimized
-        📊 Availability Check: Real-time
+        �� Availability Check: Real-time
         🗄️ Database: PostgreSQL
         📈 Performance: High-throughput
         ━━━━━━━━━━━━━━━━━━━━━━━

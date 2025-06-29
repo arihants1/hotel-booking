@@ -21,7 +21,7 @@ import java.util.Map;
  * @since 2025-06-27 05:37:49 UTC
  */
 @Data
-@Builder
+@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 @Schema(description = "Hotel information for HRS system")
@@ -71,7 +71,7 @@ public class HotelDTO implements Serializable {
     @Schema(description = "Total number of rooms", example = "150")
     private Integer totalRooms;
 
-    @Pattern(regexp = "^\\+?[1-9]\\d{1,14}$", message = "Phone must be valid")
+    @Pattern(regexp = "^\\+?[1-9][\\d\\s-()]{7,20}$", message = "Phone must be valid")
     @Schema(description = "Phone number", example = "+1-555-0123")
     private String phone;
 

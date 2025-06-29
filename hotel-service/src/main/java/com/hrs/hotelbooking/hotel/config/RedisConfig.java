@@ -24,7 +24,7 @@ import java.time.Duration;
 import java.util.List;
 
 /**
- * HRS Redis Configuration - Fixed PageImpl Serialization
+ * HRS Redis Configuration
  * Updated: 2025-06-27 12:14:45 UTC
  * Author: arihants1
  */

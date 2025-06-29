@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * HRS Hotel Mapper - Essential Mappings Only
+ * HRS Hotel Mapper
  * Converts between Hotel entity and HotelDTO
  *
  * @author arihants1

@@ -41,10 +41,10 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @CacheEvict(value = {"users", "usersByEmail"}, allEntries = true)
     public UserDTO createUser(UserDTO userDTO) {
-        log.info("Creating HRS user: {} by {}", userDTO.getEmail(), CURRENT_USER);
-
-        // Validate user data
+        // Validate user data first to prevent NPE
         validateUserDto(userDTO);
+
+        log.info("Creating HRS user: {} by {}", userDTO.getEmail(), CURRENT_USER);
 
         // Check if email already exists
         if (userRepository.existsByEmailIgnoreCase(userDTO.getEmail())) {
@@ -69,10 +69,10 @@ public class UserServiceImpl implements UserService {
         validateUserId(id);
 
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
 
         if (!user.getIsActive()) {
-            throw new ResourceNotFoundException("User", "id", id);
+            throw new ResourceNotFoundException("User not found with id: " + id);
         }
 
         UserDTO result = userMapper.toDto(user);
@@ -89,10 +89,10 @@ public class UserServiceImpl implements UserService {
         validateEmail(email);
 
         User user = userRepository.findByEmailIgnoreCase(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
 
         if (!user.getIsActive()) {
-            throw new ResourceNotFoundException("User", "email", email);
+            throw new ResourceNotFoundException("User not found with email: " + email);
         }
 
         UserDTO result = userMapper.toDto(user);
@@ -110,10 +110,10 @@ public class UserServiceImpl implements UserService {
         validateUserDto(userDTO);
 
         User existingUser = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
 
         if (!existingUser.getIsActive()) {
-            throw new ResourceNotFoundException("User", "id", id);
+            throw new ResourceNotFoundException("User not found with id: " + id);
         }
 
         // Update user
@@ -135,10 +135,10 @@ public class UserServiceImpl implements UserService {
         validateUserId(id);
 
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
 
         if (!user.getIsActive()) {
-            throw new ResourceNotFoundException("User", "id", id);
+            throw new ResourceNotFoundException("User not found with id: " + id);
         }
 
         // Soft delete

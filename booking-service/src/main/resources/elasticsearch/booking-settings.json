@@ -1,0 +1,55 @@
+{
+  "analysis": {
+    "analyzer": {
+      "booking_analyzer": {
+        "type": "custom",
+        "tokenizer": "standard",
+        "filter": [
+          "lowercase",
+          "asciifolding",
+          "booking_synonym_filter",
+          "stop"
+        ]
+      },
+      "guest_name_analyzer": {
+        "type": "custom",
+        "tokenizer": "standard",
+        "filter": [
+          "lowercase",
+          "asciifolding"
+        ]
+      },
+      "autocomplete_analyzer": {
+        "type": "custom",
+        "tokenizer": "standard",
+        "filter": [
+          "lowercase",
+          "asciifolding",
+          "edge_ngram_filter"
+        ]
+      }
+    },
+    "filter": {
+      "booking_synonym_filter": {
+        "type": "synonym",
+        "synonyms": [
+          "booking,reservation",
+          "cancelled,canceled",
+          "check-in,checkin,arrival",
+          "check-out,checkout,departure"
+        ]
+      },
+      "edge_ngram_filter": {
+        "type": "edge_ngram",
+        "min_gram": 2,
+        "max_gram": 20
+      }
+    }
+  },
+  "index": {
+    "number_of_shards": 3,
+    "number_of_replicas": 1,
+    "refresh_interval": "5s",
+    "max_result_window": 10000
+  }
+}

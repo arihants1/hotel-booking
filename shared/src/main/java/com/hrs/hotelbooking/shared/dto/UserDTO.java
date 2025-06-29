@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
  * @author arihants1
  */
 @Data
-@Builder
+@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 @Schema(description = "User information for HRS system")
@@ -45,7 +45,7 @@ public class UserDTO implements Serializable {
     @Schema(description = "Email address", example = "john.doe@example.com")
     private String email;
 
-    @Pattern(regexp = "^\\+?[1-9]\\d{1,14}$", message = "Phone must be valid")
+    @Pattern(regexp = "^\\+?[1-9][\\d\\s-()]{7,20}$", message = "Phone must be valid")
     @Schema(description = "Phone number", example = "+1-555-0123")
     private String phone;
 

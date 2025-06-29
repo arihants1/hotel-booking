@@ -1,49 +1,45 @@
-# HRS Hotel Booking System - Docker Compose with Auto Init
-# Updated: 2025-06-27 11:31:36 UTC
+# HRS Hotel Service - Docker Compose with Elasticsearch
 # Author: arihants1
 
 version: '3.8'
 
 services:
-  # PostgreSQL Database with automatic initialization
+  # PostgreSQL Database for Hotel Service
   postgres:
     image: postgres:15-alpine
-    container_name: hrs-postgres
+    container_name: hrs-postgres-hotel
     restart: unless-stopped
     environment:
-      POSTGRES_DB: hotel_booking
+      POSTGRES_DB: hotel_hotel
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres123
       PGDATA: /var/lib/postgresql/data/pgdata
     ports:
-      - "5432:5432"
+      - "5434:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      # Mount the init script - CRITICAL: This executes init.sql on startup
       - ./database/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
-      # Optional: Add multiple init scripts
-      # - ./database/additional-data.sql:/docker-entrypoint-initdb.d/02-additional.sql:ro
     networks:
-      - hrs-network
+      - hrs-hotel-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d hotel_booking"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d hotel_hotel"]
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 60s  # Give more time for initialization
+      start_period: 60s
 
-  # Redis Cache
+  # Redis Cache for Hotel Service
   redis:
     image: redis:7-alpine
-    container_name: hrs-redis
+    container_name: hrs-redis-hotel
     restart: unless-stopped
     command: redis-server --requirepass redis_password_2025 --appendonly yes
     ports:
-      - "6381:6381"
+      - "6381:6379"
     volumes:
       - redis_data:/data
     networks:
-      - hrs-network
+      - hrs-hotel-network
     healthcheck:
       test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
       interval: 30s
@@ -51,33 +47,56 @@ services:
       retries: 3
       start_period: 30s
 
+  # Elasticsearch for fast hotel search
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
+    container_name: hrs-elasticsearch-hotel
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    networks:
+      - hrs-hotel-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200/_cluster/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
   # pgAdmin for database management
   pgadmin:
     image: dpage/pgadmin4:latest
-    container_name: hrs-pgadmin
+    container_name: hrs-pgadmin-hotel
     restart: unless-stopped
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@hrs.com
       PGADMIN_DEFAULT_PASSWORD: admin_password_2025
       PGADMIN_CONFIG_SERVER_MODE: 'False'
     ports:
-      - "8080:80"
+      - "8084:80"
     volumes:
       - pgadmin_data:/var/lib/pgadmin
     networks:
-      - hrs-network
+      - hrs-hotel-network
     depends_on:
       - postgres
 
 volumes:
   postgres_data:
-    name: hrs_postgres_data
+    name: hrs_postgres_hotel_data
   redis_data:
-    name: hrs_redis_data
+    name: hrs_redis_hotel_data
+  es_data:
+    name: hrs_es_hotel_data
   pgadmin_data:
-    name: hrs_pgadmin_data
+    name: hrs_pgadmin_hotel_data
 
 networks:
-  hrs-network:
-    name: hrs-network
+  hrs-hotel-network:
+    name: hrs-hotel-network
     driver: bridge

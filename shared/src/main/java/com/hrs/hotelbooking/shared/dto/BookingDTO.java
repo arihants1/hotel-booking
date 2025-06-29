@@ -21,7 +21,7 @@ import java.time.LocalDateTime;
  * @author arihants1
  */
 @Data
-@Builder
+@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 @Schema(description = "Hotel booking information for HRS system")
